@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>食どくクエスト 〜食と毒のだいぼうけん〜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=M+PLUS+Rounded+1c:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#4a3b33;          /* 輪郭・文字のこげ茶 */
+  --paper:#fff8e4;        /* クリーム色の紙 */
+  --panel:#ffffff;
+  --red:#ff6b4a;          /* 主人公・ダメージ */
+  --red-deep:#e84e2c;
+  --green:#4cb86d;        /* せいかい */
+  --green-deep:#33995a;
+  --blue:#4a93d9;
+  --blue-deep:#2f74b8;
+  --purple:#8e6bc8;       /* 毒のむらさき */
+  --yellow:#ffd34d;
+  --orange:#ff9f3c;
+  --pink:#ff9fb0;
+  --shadow:0 6px 0 rgba(74,59,51,.18);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:"M PLUS Rounded 1c","Hiragino Maru Gothic ProN","BIZ UDGothic",sans-serif;
+  font-weight:700;color:var(--ink);
+  background:
+    radial-gradient(rgba(255,211,77,.35) 12%, transparent 13%) 0 0/34px 34px,
+    radial-gradient(rgba(255,159,60,.18) 12%, transparent 13%) 17px 17px/34px 34px,
+    var(--paper);
+  display:flex;justify-content:center;align-items:flex-start;
+  min-height:100%;
+}
+#app{width:100%;max-width:760px;padding:14px 12px 40px}
+ruby rt{font-size:.5em;font-weight:700;color:var(--ink)}
+
+/* ===== 共通パネル(テキスト教材の枠ふう) ===== */
+.panel{
+  background:var(--panel);
+  border:4px solid var(--ink);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:18px;
+  position:relative;
+}
+.btn{
+  font-family:inherit;font-weight:800;color:#fff;
+  background:var(--red);
+  border:4px solid var(--ink);
+  border-radius:999px;
+  padding:12px 30px;font-size:20px;
+  cursor:pointer;
+  box-shadow:0 6px 0 var(--ink);
+  transition:transform .08s, box-shadow .08s;
+}
+.btn:active{transform:translateY(5px);box-shadow:0 1px 0 var(--ink)}
+.btn.blue{background:var(--blue)}
+.btn.green{background:var(--green)}
+
+/* ===== タイトル画面 ===== */
+.title-screen{text-align:center;padding-top:10px}
+.title-ribbon{
+  display:inline-block;background:var(--yellow);
+  border:4px solid var(--ink);border-radius:999px;
+  padding:6px 22px;font-size:15px;letter-spacing:.12em;
+  box-shadow:var(--shadow);margin-bottom:10px;
+}
+.game-title{
+  font-family:"Mochiy Pop One",sans-serif;
+  font-size:clamp(34px,8vw,56px);
+  line-height:1.2;color:var(--red-deep);
+  text-shadow:
+    3px 3px 0 #fff,-3px 3px 0 #fff,3px -3px 0 #fff,-3px -3px 0 #fff,
+    0 7px 0 rgba(74,59,51,.22);
+  margin:4px 0 0;
+}
+.game-sub{
+  font-family:"Mochiy Pop One",sans-serif;
+  font-size:clamp(15px,3.4vw,21px);color:var(--ink);
+  margin:6px 0 10px;
+}
+.title-art{margin:6px auto;max-width:430px}
+.title-art svg{width:100%;height:auto;display:block}
+.title-msg{font-size:15px;line-height:1.9;margin:8px auto 16px;max-width:480px}
+
+/* ===== バトル画面 ===== */
+.hud{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;margin-bottom:10px;flex-wrap:wrap;
+}
+.chapter-tag{
+  background:var(--purple);color:#fff;
+  border:3px solid var(--ink);border-radius:999px;
+  padding:5px 16px;font-size:14px;box-shadow:0 4px 0 rgba(74,59,51,.2);
+}
+.q-count{
+  background:#fff;border:3px solid var(--ink);border-radius:999px;
+  padding:5px 16px;font-size:14px;box-shadow:0 4px 0 rgba(74,59,51,.2);
+}
+.stage{
+  border:4px solid var(--ink);border-radius:22px;
+  background:linear-gradient(#bfe6ff 0 62%, #b6e2a0 62% 100%);
+  box-shadow:var(--shadow);
+  position:relative;overflow:hidden;
+  height:300px;
+}
+.stage .cloud{position:absolute;opacity:.9}
+.enemy-zone{position:absolute;right:6%;bottom:24%;width:42%;max-width:230px}
+.enemy-zone svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 0 rgba(74,59,51,.18))}
+.hero-zone{position:absolute;left:5%;bottom:7%;width:30%;max-width:160px}
+.hero-zone svg{width:100%;height:auto;display:block;filter:drop-shadow(0 6px 0 rgba(74,59,51,.18))}
+.enemy-name{
+  position:absolute;right:5%;top:6%;
+  background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:5px 14px;font-size:15px;box-shadow:0 4px 0 rgba(74,59,51,.2);
+}
+.enemy-name small{display:block;font-size:11px;color:var(--purple)}
+.hp-box{
+  position:absolute;left:4%;top:6%;
+  background:#fff;border:3px solid var(--ink);border-radius:14px;
+  padding:7px 12px;width:46%;max-width:230px;
+  box-shadow:0 4px 0 rgba(74,59,51,.2);
+}
+.hp-label{font-size:12px;display:flex;justify-content:space-between}
+.hp-bar{height:14px;border:2.5px solid var(--ink);border-radius:999px;background:#f1e7d8;overflow:hidden;margin-top:3px}
+.hp-fill{height:100%;background:linear-gradient(#7fe09b,#4cb86d);border-radius:999px;transition:width .5s}
+.hp-fill.low{background:linear-gradient(#ffd34d,#ff9f3c)}
+.hp-fill.danger{background:linear-gradient(#ff8f7a,#e84e2c)}
+
+/* せりふ・問題 */
+.speech{
+  margin-top:12px;
+  background:#fff;border:4px solid var(--ink);border-radius:18px;
+  box-shadow:var(--shadow);padding:14px 16px;
+}
+.speech .q-badge{
+  display:inline-block;background:var(--blue);color:#fff;
+  border:3px solid var(--ink);border-radius:999px;
+  padding:3px 14px;font-size:13px;margin-bottom:7px;
+}
+.q-text{font-size:clamp(16px,3.6vw,20px);line-height:1.7}
+.choices{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.choice{
+  font-family:inherit;font-weight:700;font-size:clamp(15px,3.4vw,18px);
+  text-align:left;color:var(--ink);
+  background:#fff;border:3.5px solid var(--ink);border-radius:16px;
+  padding:11px 14px 11px 12px;cursor:pointer;
+  box-shadow:0 5px 0 rgba(74,59,51,.22);
+  display:flex;align-items:center;gap:10px;
+  transition:transform .08s, box-shadow .08s, background .15s;
+  line-height:1.5;
+}
+.choice:hover{background:#fff3d6}
+.choice:active{transform:translateY(4px);box-shadow:0 1px 0 rgba(74,59,51,.22)}
+.choice .mark{
+  flex:0 0 34px;height:34px;border-radius:50%;
+  background:var(--yellow);border:3px solid var(--ink);
+  display:flex;align-items:center;justify-content:center;
+  font-family:"Mochiy Pop One",sans-serif;font-size:16px;
+}
+.choice:disabled{opacity:.55;cursor:default}
+.choice.picked-correct{background:#dcf5e4;border-color:var(--green-deep)}
+.choice.picked-wrong{background:#ffe2da;border-color:var(--red-deep)}
+
+/* 解説オーバーレイ */
+.overlay{
+  position:fixed;inset:0;background:rgba(74,59,51,.45);
+  display:flex;justify-content:center;align-items:center;
+  padding:16px;z-index:50;animation:fadeIn .25s;
+}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.result-card{
+  width:100%;max-width:560px;background:#fff;
+  border:5px solid var(--ink);border-radius:26px;
+  box-shadow:0 10px 0 rgba(74,59,51,.3);
+  padding:20px;text-align:center;
+  animation:popUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes popUp{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.result-stamp{
+  font-family:"Mochiy Pop One",sans-serif;
+  font-size:clamp(28px,6vw,40px);
+  text-shadow:2px 2px 0 #fff,-2px 2px 0 #fff,2px -2px 0 #fff,-2px -2px 0 #fff;
+}
+.result-stamp.ok{color:var(--green-deep)}
+.result-stamp.ng{color:var(--red-deep)}
+.result-dmg{font-size:15px;color:var(--red-deep);margin-top:2px}
+.kaisetsu{
+  text-align:left;background:var(--paper);
+  border:3px dashed var(--orange);border-radius:16px;
+  padding:13px 15px;margin:12px 0;
+  font-size:15px;line-height:1.9;font-weight:500;
+}
+.kaisetsu b{color:var(--red-deep)}
+.kaisetsu .k-title{
+  display:inline-block;background:var(--orange);color:#fff;
+  border-radius:999px;padding:2px 14px;font-size:13px;font-weight:800;
+  margin-bottom:6px;
+}
+
+/* 章とびら */
+.chapter-screen{text-align:center;padding-top:24px}
+.chapter-num{
+  display:inline-block;background:var(--blue);color:#fff;
+  border:4px solid var(--ink);border-radius:999px;
+  padding:7px 26px;font-size:18px;box-shadow:var(--shadow);
+  font-family:"Mochiy Pop One",sans-serif;
+}
+.chapter-title{
+  font-family:"Mochiy Pop One",sans-serif;
+  font-size:clamp(26px,6vw,40px);margin:14px 0 6px;
+  text-shadow:2px 2px 0 #fff,-2px 2px 0 #fff,2px -2px 0 #fff,-2px -2px 0 #fff;
+}
+.chapter-art{max-width:300px;margin:10px auto}
+.chapter-art svg{width:100%;height:auto}
+.chapter-desc{font-size:15px;line-height:1.9;max-width:440px;margin:0 auto 18px}
+
+/* エンディング・ゲームオーバー */
+.end-screen{text-align:center;padding-top:18px}
+.rank-card{
+  display:inline-block;background:#fff;border:4px solid var(--ink);
+  border-radius:20px;padding:14px 30px;box-shadow:var(--shadow);
+  margin:12px 0;
+}
+.rank-card .rank-name{
+  font-family:"Mochiy Pop One",sans-serif;
+  font-size:clamp(24px,5.5vw,34px);color:var(--orange);
+  text-shadow:2px 2px 0 #fff;
+}
+.stat-row{font-size:16px;margin-top:6px}
+
+/* アニメーション */
+.shake{animation:shake .5s}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-12px) rotate(-3deg)}
+  35%{transform:translateX(10px) rotate(2deg)}
+  55%{transform:translateX(-8px)}
+  75%{transform:translateX(6px)}
+}
+.flash-red{animation:flashRed .5s}
+@keyframes flashRed{
+  20%{background:rgba(232,78,44,.35)}
+}
+.enemy-hit{animation:enemyHit .7s forwards}
+@keyframes enemyHit{
+  0%{transform:none;opacity:1}
+  20%{transform:translateX(14px) rotate(6deg)}
+  100%{transform:translateY(30px) rotate(18deg);opacity:0}
+}
+.enemy-in{animation:enemyIn .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes enemyIn{from{transform:translateX(70px) scale(.6);opacity:0}to{transform:none;opacity:1}}
+.hero-bounce{animation:heroBounce 2.2s ease-in-out infinite}
+@keyframes heroBounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.enemy-float{animation:enemyFloat 2.6s ease-in-out infinite}
+@keyframes enemyFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+
+.sound-btn{
+  position:fixed;top:10px;right:10px;z-index:60;
+  width:46px;height:46px;border-radius:50%;
+  background:#fff;border:3px solid var(--ink);
+  box-shadow:0 4px 0 rgba(74,59,51,.25);
+  cursor:pointer;font-size:12px;font-weight:800;color:var(--ink);
+  font-family:inherit;
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;transition:none !important}
+}
+@media (max-width:480px){
+  .stage{height:250px}
+  .panel{padding:14px}
+}
+</style>
+</head>
+<body>
+<button class="sound-btn" id="soundBtn" aria-label="音のオン・オフ">音<br>ON</button>
+<div id="app"></div>
+<script>
+/* =====================================================
+   食どくクエスト 〜食と毒のだいぼうけん〜
+   学習塾イベント「食と毒」用クイズRPG
+===================================================== */
+/* ---------- SVGイラスト集(教材マスコット風) ---------- */
+const INK = "#4a3b33";
+function svgWrap(vb, inner){
+  return '<svg viewBox="'+vb+'" xmlns="http://www.w3.org/2000/svg" role="img">'+inner+'</svg>';
+}
+/* 目・ほっぺなどの共通パーツ */
+function eyes(x1,x2,y,r){
+  r = r||7;
+  return '<circle cx="'+x1+'" cy="'+y+'" r="'+r+'" fill="'+INK+'"/>'+
+         '<circle cx="'+x2+'" cy="'+y+'" r="'+r+'" fill="'+INK+'"/>'+
+         '<circle cx="'+(x1+2.5)+'" cy="'+(y-2.5)+'" r="'+(r*.32)+'" fill="#fff"/>'+
+         '<circle cx="'+(x2+2.5)+'" cy="'+(y-2.5)+'" r="'+(r*.32)+'" fill="#fff"/>';
+}
+function angryEyes(x1,x2,y){
+  return '<path d="M'+(x1-9)+' '+(y-9)+' L'+(x1+7)+' '+(y-3)+'" stroke="'+INK+'" stroke-width="4" stroke-linecap="round"/>'+
+         '<path d="M'+(x2+9)+' '+(y-9)+' L'+(x2-7)+' '+(y-3)+'" stroke="'+INK+'" stroke-width="4" stroke-linecap="round"/>'+
+         '<circle cx="'+x1+'" cy="'+y+'" r="6.5" fill="'+INK+'"/>'+
+         '<circle cx="'+x2+'" cy="'+y+'" r="6.5" fill="'+INK+'"/>'+
+         '<circle cx="'+(x1+2)+'" cy="'+(y-2)+'" r="2" fill="#fff"/>'+
+         '<circle cx="'+(x2+2)+'" cy="'+(y-2)+'" r="2" fill="#fff"/>';
+}
+function cheeks(x1,x2,y,c){
+  c = c||"#ff9fb0";
+  return '<ellipse cx="'+x1+'" cy="'+y+'" rx="9" ry="5.5" fill="'+c+'" opacity=".75"/>'+
+         '<ellipse cx="'+x2+'" cy="'+y+'" rx="9" ry="5.5" fill="'+c+'" opacity=".75"/>';
+}
+
+/* ---- 主人公(フォークの剣となべブタの盾を持つ子) ---- */
+const ART_HERO = svgWrap("0 0 200 220",
+  /* 盾(なべブタ) */
+  '<circle cx="38" cy="140" r="30" fill="#9fb6c9" stroke="'+INK+'" stroke-width="5"/>'+
+  '<circle cx="38" cy="140" r="18" fill="#c5d6e4" stroke="'+INK+'" stroke-width="4"/>'+
+  '<circle cx="38" cy="140" r="6" fill="'+INK+'"/>'+
+  /* フォークの剣 */
+  '<rect x="156" y="68" width="9" height="76" rx="4" fill="#f3c14b" stroke="'+INK+'" stroke-width="4"/>'+
+  '<path d="M147 70 V40 M160.5 70 V36 M174 70 V40" stroke="'+INK+'" stroke-width="11" stroke-linecap="round"/>'+
+  '<path d="M147 70 V42 M160.5 70 V38 M174 70 V42" stroke="#e6e6e6" stroke-width="5" stroke-linecap="round"/>'+
+  '<path d="M144 70 H177 V80 H144 Z" fill="#e6e6e6" stroke="'+INK+'" stroke-width="4"/>'+
+  /* 体 */
+  '<path d="M70 150 q30 -18 60 0 l6 38 q-36 14 -72 0 Z" fill="#ff6b4a" stroke="'+INK+'" stroke-width="5"/>'+
+  /* 顔 */
+  '<circle cx="100" cy="105" r="46" fill="#ffe1c4" stroke="'+INK+'" stroke-width="5"/>'+
+  /* かみの毛+バンダナ */
+  '<path d="M57 96 a45 45 0 0 1 86 -2 q-12 -14 -28 -12 q-4 -10 -16 -11 q-12 1 -16 11 q-16 -2 -26 14 Z" fill="#7a5236" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M55 92 q45 -20 90 0 l-3 12 q-42 -16 -84 0 Z" fill="#ffd34d" stroke="'+INK+'" stroke-width="4.5"/>'+
+  eyes(84,116,112,6.5)+
+  cheeks(74,126,124)+
+  '<path d="M93 126 q7 6 14 0" stroke="'+INK+'" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  /* うで */
+  '<path d="M72 152 q-18 0 -26 -8" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<path d="M128 152 q20 -2 30 -16" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="160" cy="134" r="9" fill="#ffe1c4" stroke="'+INK+'" stroke-width="4.5"/>'+
+  /* 足 */
+  '<path d="M84 190 v14 M116 190 v14" stroke="'+INK+'" stroke-width="6" stroke-linecap="round"/>'+
+  '<ellipse cx="82" cy="208" rx="13" ry="7" fill="#4a93d9" stroke="'+INK+'" stroke-width="4"/>'+
+  '<ellipse cx="118" cy="208" rx="13" ry="7" fill="#4a93d9" stroke="'+INK+'" stroke-width="4"/>'
+);
+
+/* ---- 主人公(勝利ポーズ・タイトル/クリア用) ---- */
+const ART_HERO_WIN = svgWrap("0 0 200 220",
+  '<rect x="153" y="14" width="9" height="80" rx="4" transform="rotate(18 158 50)" fill="#f3c14b" stroke="'+INK+'" stroke-width="4"/>'+
+  '<g transform="rotate(18 160 30)">'+
+  '<path d="M147 36 V10 M160.5 36 V6 M174 36 V10" stroke="'+INK+'" stroke-width="11" stroke-linecap="round"/>'+
+  '<path d="M147 36 V12 M160.5 36 V8 M174 36 V12" stroke="#e6e6e6" stroke-width="5" stroke-linecap="round"/>'+
+  '<path d="M144 36 H177 V46 H144 Z" fill="#e6e6e6" stroke="'+INK+'" stroke-width="4"/></g>'+
+  '<path d="M70 150 q30 -18 60 0 l6 38 q-36 14 -72 0 Z" fill="#ff6b4a" stroke="'+INK+'" stroke-width="5"/>'+
+  '<circle cx="100" cy="105" r="46" fill="#ffe1c4" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M57 96 a45 45 0 0 1 86 -2 q-12 -14 -28 -12 q-4 -10 -16 -11 q-12 1 -16 11 q-16 -2 -26 14 Z" fill="#7a5236" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M55 92 q45 -20 90 0 l-3 12 q-42 -16 -84 0 Z" fill="#ffd34d" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<path d="M76 108 q8 -8 16 0 M108 108 q8 -8 16 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(74,126,120)+
+  '<path d="M88 122 q12 12 24 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  '<path d="M72 152 q-22 -10 -26 -30" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="44" cy="118" r="9" fill="#ffe1c4" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<path d="M128 152 q22 -16 28 -44" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="158" cy="104" r="9" fill="#ffe1c4" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<path d="M84 190 v14 M116 190 v14" stroke="'+INK+'" stroke-width="6" stroke-linecap="round"/>'+
+  '<ellipse cx="82" cy="208" rx="13" ry="7" fill="#4a93d9" stroke="'+INK+'" stroke-width="4"/>'+
+  '<ellipse cx="118" cy="208" rx="13" ry="7" fill="#4a93d9" stroke="'+INK+'" stroke-width="4"/>'+
+  '<path d="M30 40 l6 12 M170 60 l-2 -14 M50 24 l10 6" stroke="#ff9f3c" stroke-width="5" stroke-linecap="round"/>'
+);
+
+/* ---- 主人公(やられポーズ) ---- */
+const ART_HERO_KO = svgWrap("0 0 200 220",
+  '<ellipse cx="100" cy="196" rx="74" ry="16" fill="#d9cdb8"/>'+
+  '<path d="M64 178 q36 -16 72 0 l-4 16 q-32 10 -64 0 Z" fill="#ff6b4a" stroke="'+INK+'" stroke-width="5"/>'+
+  '<circle cx="100" cy="140" r="44" fill="#ffe1c4" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M59 132 a44 44 0 0 1 84 -2 q-12 -14 -28 -12 q-4 -10 -16 -11 q-12 1 -16 11 q-16 -2 -24 14 Z" fill="#7a5236" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M76 142 l12 12 M88 142 l-12 12 M112 142 l12 12 M124 142 l-12 12" stroke="'+INK+'" stroke-width="4.5" stroke-linecap="round"/>'+
+  '<ellipse cx="100" cy="166" rx="7" ry="9" fill="'+INK+'"/>'+
+  '<path d="M40 70 q10 -16 24 -6 q2 -18 18 -16" stroke="#8e6bc8" stroke-width="5" fill="none" stroke-linecap="round" opacity=".7"/>'+
+  '<circle cx="150" cy="60" r="7" fill="none" stroke="#8e6bc8" stroke-width="4" opacity=".7"/>'+
+  '<circle cx="166" cy="40" r="5" fill="none" stroke="#8e6bc8" stroke-width="4" opacity=".6"/>'
+);
+
+/* ---- 第1章ボスたち ---- */
+/* メジャガー(芽の出たジャガイモ) */
+const ART_POTATO = svgWrap("0 0 220 200",
+  '<ellipse cx="110" cy="110" rx="84" ry="66" fill="#d9a05b" stroke="'+INK+'" stroke-width="5"/>'+
+  '<ellipse cx="110" cy="118" rx="84" ry="58" fill="#cf9650" opacity=".5"/>'+
+  /* 緑がかった部分 */
+  '<path d="M40 86 q30 -34 70 -28 q-40 4 -56 34 Z" fill="#9fbf6a" opacity=".8"/>'+
+  /* 芽 */
+  '<path d="M70 52 q-4 -22 12 -30" stroke="#7da94f" stroke-width="9" fill="none" stroke-linecap="round"/>'+
+  '<path d="M70 52 q-4 -22 12 -30" stroke="'+INK+'" stroke-width="3" fill="none" stroke-linecap="round" opacity=".4"/>'+
+  '<circle cx="84" cy="20" r="10" fill="#a8cc6e" stroke="'+INK+'" stroke-width="4"/>'+
+  '<path d="M148 50 q10 -18 -2 -28" stroke="#7da94f" stroke-width="9" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="144" cy="18" r="9" fill="#a8cc6e" stroke="'+INK+'" stroke-width="4"/>'+
+  '<path d="M186 96 q20 -6 24 -22" stroke="#7da94f" stroke-width="8" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="212" cy="70" r="8" fill="#a8cc6e" stroke="'+INK+'" stroke-width="4"/>'+
+  angryEyes(86,134,104)+
+  '<path d="M96 132 q14 -10 28 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(70,150,122,"#e8845f")+
+  '<ellipse cx="56" cy="140" rx="5" ry="3.5" fill="#8a6a3c"/>'+
+  '<ellipse cx="160" cy="146" rx="5" ry="3.5" fill="#8a6a3c"/>'
+);
+
+/* スイセンガー(ニラに化けたスイセン) */
+const ART_SUISEN = svgWrap("0 0 220 200",
+  /* 葉 */
+  '<path d="M96 180 q-30 -60 -16 -130 q16 36 24 70 Z" fill="#5cab63" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M124 180 q30 -60 16 -130 q-16 36 -24 70 Z" fill="#4d9c55" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M110 182 q-8 -70 0 -140 q8 70 0 140 Z" fill="#6cbb72" stroke="'+INK+'" stroke-width="5"/>'+
+  /* 花 */
+  '<g transform="translate(110 44)">'+
+  '<g fill="#fff" stroke="'+INK+'" stroke-width="4">'+
+  '<ellipse cx="0" cy="-24" rx="10" ry="16"/>'+
+  '<ellipse cx="22" cy="-10" rx="10" ry="16" transform="rotate(60 22 -10)"/>'+
+  '<ellipse cx="22" cy="14" rx="10" ry="16" transform="rotate(120 22 14)"/>'+
+  '<ellipse cx="0" cy="26" rx="10" ry="16"/>'+
+  '<ellipse cx="-22" cy="14" rx="10" ry="16" transform="rotate(60 -22 14)"/>'+
+  '<ellipse cx="-22" cy="-10" rx="10" ry="16" transform="rotate(120 -22 -10)"/></g>'+
+  '<circle cx="0" cy="0" r="13" fill="#ffd34d" stroke="'+INK+'" stroke-width="4"/>'+
+  '<circle cx="-4" cy="-2" r="2.4" fill="'+INK+'"/><circle cx="4" cy="-2" r="2.4" fill="'+INK+'"/>'+
+  '<path d="M-4 4 q4 4 8 0" stroke="'+INK+'" stroke-width="2.6" fill="none" stroke-linecap="round"/>'+
+  '</g>'+
+  /* ニラのおめん(変装) */
+  '<g transform="translate(160 120) rotate(12)">'+
+  '<rect x="-26" y="-8" width="52" height="16" rx="8" fill="#3f8a46" stroke="'+INK+'" stroke-width="4"/>'+
+  '<text x="0" y="5" text-anchor="middle" font-size="11" fill="#fff" font-weight="bold" font-family="sans-serif">ニラ?</text></g>'+
+  '<path d="M40 60 q-10 4 -12 14 M52 36 q-12 0 -16 8" stroke="#8e6bc8" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".7"/>'
+);
+
+/* ドクキノコン(毒キノコ・地味キノコの相棒つき) */
+const ART_KINOKO = svgWrap("0 0 220 200",
+  /* 地味キノコ(うしろ) */
+  '<g transform="translate(168 120)">'+
+  '<path d="M-34 4 q0 -34 34 -34 q34 0 34 34 Z" fill="#c8b394" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<rect x="-13" y="4" width="26" height="34" rx="9" fill="#efe3cd" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<circle cx="-7" cy="18" r="3.4" fill="'+INK+'"/><circle cx="7" cy="18" r="3.4" fill="'+INK+'"/>'+
+  '<path d="M-5 27 q5 4 10 0" stroke="'+INK+'" stroke-width="3" fill="none" stroke-linecap="round"/></g>'+
+  /* 派手な毒キノコ(メイン) */
+  '<g transform="translate(86 96)">'+
+  '<path d="M-62 10 q0 -64 62 -64 q62 0 62 64 Z" fill="#e84e6a" stroke="'+INK+'" stroke-width="5"/>'+
+  '<circle cx="-30" cy="-18" r="10" fill="#fff" stroke="'+INK+'" stroke-width="3.5"/>'+
+  '<circle cx="8" cy="-34" r="12" fill="#fff" stroke="'+INK+'" stroke-width="3.5"/>'+
+  '<circle cx="38" cy="-10" r="9" fill="#fff" stroke="'+INK+'" stroke-width="3.5"/>'+
+  '<rect x="-22" y="10" width="44" height="56" rx="14" fill="#fff4e0" stroke="'+INK+'" stroke-width="5"/>'+
+  angryEyes(-10,12,30).replace(/stroke-width="4"/g,'stroke-width="3.6"')+
+  '<path d="M-8 46 q9 7 18 0" stroke="'+INK+'" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  cheeks(-16,18,40,"#ff9fb0")+
+  '</g>'+
+  '<path d="M30 36 q-8 -12 2 -20 M52 22 q-2 -12 8 -16" stroke="#8e6bc8" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".7"/>'
+);
+
+/* フグマル(ふくらんだフグ) */
+const ART_FUGU = svgWrap("0 0 220 200",
+  '<circle cx="104" cy="104" r="70" fill="#9ed3ec" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M40 120 q64 36 128 0 l-6 22 q-58 26 -116 0 Z" fill="#f3fbff" stroke="'+INK+'" stroke-width="4.5"/>'+
+  /* トゲ */
+  '<g stroke="'+INK+'" stroke-width="4" fill="#9ed3ec">'+
+  '<path d="M100 32 l6 -16 6 16 Z M62 44 l-4 -16 12 8 Z M146 44 l4 -16 -12 8 Z M40 86 l-16 -6 14 -8 Z M170 86 l16 -6 -14 -8 Z"/></g>'+
+  /* しっぽ・ひれ */
+  '<path d="M172 96 l30 -16 -6 24 6 22 -30 -14 Z" fill="#7bc1e2" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<path d="M86 150 q-2 16 -16 18 q4 -12 2 -18 Z" fill="#7bc1e2" stroke="'+INK+'" stroke-width="4"/>'+
+  eyes(80,124,92,8)+
+  '<path d="M92 118 q10 8 20 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(64,142,108,"#ffb3c0")+
+  '<circle cx="34" cy="40" r="6" fill="none" stroke="#7bc1e2" stroke-width="4"/>'+
+  '<circle cx="22" cy="58" r="4" fill="none" stroke="#7bc1e2" stroke-width="3.5"/>'+
+  '<path d="M186 30 q-6 10 2 18" stroke="#8e6bc8" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".7"/>'
+);
+
+/* ---- 第2章のモンスター ---- */
+/* カビーノ(カビの生えた食パン) */
+const ART_KABI = svgWrap("0 0 220 200",
+  '<path d="M36 70 q0 -34 38 -34 q14 -14 36 -14 q22 0 36 14 q38 0 38 34 v94 q0 12 -12 12 H48 q-12 0 -12 -12 Z" fill="#f0c98e" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M50 78 q0 -26 30 -26 q12 -12 30 -12 q18 0 30 12 q30 0 30 26 v80 q0 8 -8 8 H58 q-8 0 -8 -8 Z" fill="#fbe8c4" stroke="'+INK+'" stroke-width="4"/>'+
+  /* カビ */
+  '<g stroke="'+INK+'" stroke-width="3.5">'+
+  '<circle cx="70" cy="78" r="13" fill="#7fae6f"/>'+
+  '<circle cx="86" cy="66" r="8" fill="#a4c98c"/>'+
+  '<circle cx="150" cy="150" r="14" fill="#6f9ec2"/>'+
+  '<circle cx="166" cy="138" r="8" fill="#9dc0da"/>'+
+  '<circle cx="160" cy="72" r="9" fill="#8aa86a"/>'+
+  '<circle cx="62" cy="146" r="8" fill="#88b0cf"/></g>'+
+  '<g fill="#5e7d4e" opacity=".8">'+
+  '<circle cx="98" cy="80" r="3"/><circle cx="130" cy="64" r="3"/><circle cx="80" cy="130" r="3"/>'+
+  '<circle cx="140" cy="120" r="3"/><circle cx="120" cy="146" r="3"/></g>'+
+  angryEyes(92,128,104)+
+  '<path d="M100 130 q10 -8 20 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(78,142,118,"#e8a87f")
+);
+
+/* クサルン(いたんだおにぎり) */
+const ART_KUSARU = svgWrap("0 0 220 200",
+  '<path d="M110 30 q14 0 22 14 l44 76 q8 14 0 26 q-8 12 -24 12 H68 q-16 0 -24 -12 q-8 -12 0 -26 l44 -76 q8 -14 22 -14 Z" fill="#fffdf4" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M86 158 h48 v-30 q-24 -10 -48 0 Z" fill="#3c3c3c" stroke="'+INK+'" stroke-width="4.5"/>'+
+  /* いたみマーク */
+  '<path d="M70 86 q8 -6 14 2 M138 78 q8 -6 14 2" stroke="#9aa84f" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="66" cy="110" r="5" fill="#d4dd9a" stroke="'+INK+'" stroke-width="3"/>'+
+  '<circle cx="156" cy="104" r="5" fill="#d4dd9a" stroke="'+INK+'" stroke-width="3"/>'+
+  /* くさいゆげ */
+  '<path d="M60 36 q-8 -10 0 -20 M160 40 q8 -10 0 -20 M110 16 q-6 -8 0 -16" stroke="#b08fd9" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".75"/>'+
+  '<path d="M84 96 l16 8 M136 96 l-16 8" stroke="'+INK+'" stroke-width="4.5" stroke-linecap="round"/>'+
+  '<ellipse cx="110" cy="122" rx="9" ry="7" fill="'+INK+'"/>'+
+  cheeks(82,138,116,"#c9d18f")+
+  '<path d="M178 132 l10 4 M186 116 l12 0" stroke="#9aa84f" stroke-width="4" stroke-linecap="round" opacity=".7"/>'
+);
+
+/* ナゾノキン(発酵?腐敗?なぞの菌) */
+const ART_KIN = svgWrap("0 0 220 200",
+  '<ellipse cx="110" cy="116" rx="72" ry="60" fill="#cdaee6" stroke="'+INK+'" stroke-width="5"/>'+
+  '<ellipse cx="110" cy="126" rx="72" ry="50" fill="#bf9cdd" opacity=".5"/>'+
+  /* なっとうのつぶ仲間 */
+  '<g stroke="'+INK+'" stroke-width="4">'+
+  '<ellipse cx="40" cy="170" rx="16" ry="12" fill="#c9a06a"/>'+
+  '<ellipse cx="180" cy="172" rx="16" ry="12" fill="#c9a06a"/></g>'+
+  '<circle cx="35" cy="168" r="2.4" fill="'+INK+'"/><circle cx="45" cy="168" r="2.4" fill="'+INK+'"/>'+
+  '<circle cx="175" cy="170" r="2.4" fill="'+INK+'"/><circle cx="185" cy="170" r="2.4" fill="'+INK+'"/>'+
+  /* ねばねばの糸 */
+  '<path d="M56 162 q14 -10 28 -2 M164 164 q-14 -10 -28 -2" stroke="#e8e0c8" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  /* 触角 */
+  '<path d="M84 62 q-8 -22 6 -32 M136 62 q8 -22 -6 -32" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="92" cy="26" r="9" fill="#ffd34d" stroke="'+INK+'" stroke-width="4"/>'+
+  '<circle cx="128" cy="26" r="9" fill="#ffd34d" stroke="'+INK+'" stroke-width="4"/>'+
+  eyes(86,134,108,8)+
+  '<path d="M98 134 q12 9 24 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(68,152,124,"#e8a8d0")+
+  '<text x="110" y="92" text-anchor="middle" font-size="22" font-weight="bold" fill="#fff" font-family="sans-serif">?</text>'
+);
+
+/* ---- 第3章のモンスター ---- */
+/* ホネゴン(魚の骨) */
+const ART_HONE = svgWrap("0 0 220 200",
+  '<g fill="#fdf7e8" stroke="'+INK+'" stroke-width="5">'+
+  /* 頭 */
+  '<path d="M30 100 q0 -34 40 -34 q26 0 34 26 l0 18 q-8 24 -34 24 q-40 0 -40 -34 Z"/>'+
+  /* 背骨 */
+  '<path d="M104 100 H176" stroke-width="9" stroke-linecap="round"/>'+
+  /* 小骨 */
+  '<path d="M116 100 l-8 -22 M116 100 l-8 22 M136 100 l-8 -22 M136 100 l-8 22 M156 100 l-8 -22 M156 100 l-8 22" stroke-width="6" stroke-linecap="round"/>'+
+  /* しっぽ */
+  '<path d="M176 100 l26 -20 -8 20 8 20 Z"/></g>'+
+  '<circle cx="56" cy="92" r="8" fill="'+INK+'"/>'+
+  '<circle cx="58.5" cy="89.5" r="2.6" fill="#fff"/>'+
+  '<path d="M44 114 q8 6 16 0" stroke="'+INK+'" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  '<path d="M150 52 l8 -12 M170 60 l12 -8" stroke="#9ec7e0" stroke-width="4.5" stroke-linecap="round"/>'+
+  '<path d="M40 150 q20 14 60 12" stroke="#d9cdb8" stroke-width="5" fill="none" stroke-linecap="round"/>'
+);
+
+/* タネビー(青いウメの実と種) */
+const ART_UME = svgWrap("0 0 220 200",
+  /* えだと葉 */
+  '<path d="M150 30 q-30 10 -44 38" stroke="#7a5236" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+  '<path d="M150 30 q24 -4 34 12 q-22 8 -34 -12 Z" fill="#6fae5c" stroke="'+INK+'" stroke-width="4"/>'+
+  /* 青いウメ */
+  '<circle cx="96" cy="110" r="56" fill="#a8cf7e" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M96 56 q6 28 0 54" stroke="#7fa85a" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  angryEyes(76,118,104)+
+  '<path d="M86 130 q10 -8 20 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(62,132,120,"#cfe3a0")+
+  /* 種のこぶん */
+  '<g transform="translate(178 142)">'+
+  '<ellipse cx="0" cy="0" rx="22" ry="27" fill="#d8b07c" stroke="'+INK+'" stroke-width="4.5"/>'+
+  '<path d="M-12 -10 q4 -8 10 -10 M-14 2 q-2 8 2 14" stroke="#b88f5c" stroke-width="3.5" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="-6" cy="-2" r="3" fill="'+INK+'"/><circle cx="7" cy="-2" r="3" fill="'+INK+'"/>'+
+  '<path d="M-4 8 q4 4 9 0" stroke="'+INK+'" stroke-width="3" fill="none" stroke-linecap="round"/></g>'+
+  '<path d="M30 50 q-8 8 -4 18" stroke="#8e6bc8" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".7"/>'
+);
+
+/* フショクブキング(食べられないところ?の王さま) */
+const ART_KING = svgWrap("0 0 220 210",
+  /* 大根の体 */
+  '<path d="M76 70 h68 q8 50 -8 92 q-10 26 -26 26 q-16 0 -26 -26 q-16 -42 -8 -92 Z" fill="#fbfbf4" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M86 110 h12 M124 124 h12 M96 150 h12" stroke="#d9d4c4" stroke-width="4" stroke-linecap="round"/>'+
+  '<path d="M110 188 q2 12 0 18" stroke="'+INK+'" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  /* 葉っぱ */
+  '<path d="M94 70 q-18 -28 -38 -34 q24 -4 40 12 q-4 -22 6 -36 q6 18 10 36 q6 -20 22 -28 q-6 20 -14 34 q18 -12 36 -8 q-18 10 -34 24 Z" fill="#5cab63" stroke="'+INK+'" stroke-width="5"/>'+
+  /* 王かん */
+  '<path d="M84 30 l8 -20 12 14 12 -20 12 20 12 -14 8 20 q-32 12 -64 0 Z" fill="#ffd34d" stroke="'+INK+'" stroke-width="4.5" transform="translate(0 -8)"/>'+
+  /* マント */
+  '<path d="M74 84 q-34 30 -28 84 q16 -8 32 -4 M146 84 q34 30 28 84 q-16 -8 -32 -4" fill="#b05cab" stroke="'+INK+'" stroke-width="5"/>'+
+  eyes(96,126,102,7)+
+  '<path d="M88 92 q8 -6 16 0 M118 92 q8 -6 16 0" stroke="'+INK+'" stroke-width="4" fill="none" stroke-linecap="round"/>'+
+  '<path d="M100 126 q11 9 22 0" stroke="'+INK+'" stroke-width="4.5" fill="none" stroke-linecap="round"/>'+
+  cheeks(84,138,116)
+);
+
+/* ---- 章とびら用ミニイラスト ---- */
+const ART_CH1 = svgWrap("0 0 220 150",
+  '<g transform="translate(56 84)"><path d="M-44 6 q0 -44 44 -44 q44 0 44 44 Z" fill="#e84e6a" stroke="'+INK+'" stroke-width="5"/>'+
+  '<circle cx="-18" cy="-14" r="8" fill="#fff" stroke="'+INK+'" stroke-width="3.5"/>'+
+  '<circle cx="12" cy="-24" r="9" fill="#fff" stroke="'+INK+'" stroke-width="3.5"/>'+
+  '<rect x="-16" y="6" width="32" height="40" rx="11" fill="#fff4e0" stroke="'+INK+'" stroke-width="5"/></g>'+
+  '<g transform="translate(158 76)"><ellipse cx="0" cy="0" rx="46" ry="36" fill="#d9a05b" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M-14 -32 q-4 -16 8 -22" stroke="#7da94f" stroke-width="7" fill="none" stroke-linecap="round"/>'+
+  '<circle cx="-4" cy="-56" r="8" fill="#a8cc6e" stroke="'+INK+'" stroke-width="4"/></g>'+
+  '<path d="M104 28 q-6 8 0 16 M118 22 q6 8 0 18" stroke="#8e6bc8" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".7"/>'
+);
+const ART_CH2 = svgWrap("0 0 220 150",
+  '<path d="M48 56 q0 -22 24 -22 q9 -9 23 -9 q14 0 23 9 q24 0 24 22 v56 q0 8 -8 8 H56 q-8 0 -8 -8 Z" fill="#fbe8c4" stroke="'+INK+'" stroke-width="5"/>'+
+  '<g stroke="'+INK+'" stroke-width="3.5"><circle cx="74" cy="62" r="10" fill="#7fae6f"/><circle cx="128" cy="96" r="11" fill="#6f9ec2"/><circle cx="142" cy="84" r="6" fill="#9dc0da"/></g>'+
+  '<path d="M168 44 q8 -10 0 -20 M186 56 q8 -10 0 -20" stroke="#b08fd9" stroke-width="4.5" fill="none" stroke-linecap="round" opacity=".8"/>'
+);
+const ART_CH3 = svgWrap("0 0 220 150",
+  '<g fill="#fdf7e8" stroke="'+INK+'" stroke-width="5" transform="translate(0 10)">'+
+  '<path d="M34 66 q0 -26 32 -26 q22 0 28 20 l0 12 q-6 20 -28 20 q-32 0 -32 -26 Z"/>'+
+  '<path d="M94 66 H156" stroke-width="8" stroke-linecap="round"/>'+
+  '<path d="M106 66 l-7 -18 M106 66 l-7 18 M126 66 l-7 -18 M126 66 l-7 18" stroke-width="5.5" stroke-linecap="round"/>'+
+  '<path d="M156 66 l22 -17 -7 17 7 17 Z"/></g>'+
+  '<circle cx="54" cy="70" r="6.5" fill="'+INK+'"/>'+
+  '<g transform="translate(186 104)"><circle cx="0" cy="0" r="22" fill="#e8534a" stroke="'+INK+'" stroke-width="5"/>'+
+  '<path d="M0 -22 q-2 -10 6 -14" stroke="#7a5236" stroke-width="5" fill="none" stroke-linecap="round"/>'+
+  '<path d="M2 -30 q14 -6 18 6 q-12 6 -18 -6 Z" fill="#6fae5c" stroke="'+INK+'" stroke-width="3.5"/></g>'
+);
+
+/* タイトル画面の集合絵 */
+const ART_TITLE = svgWrap("0 0 460 240",
+  '<ellipse cx="230" cy="216" rx="200" ry="18" fill="rgba(74,59,51,.12)"/>'+
+  '<g transform="translate(40 30) scale(.62)">'+ART_KINOKO.replace(/<\/?svg[^>]*>/g,'')+'</g>'+
+  '<g transform="translate(322 26) scale(.6)">'+ART_FUGU.replace(/<\/?svg[^>]*>/g,'')+'</g>'+
+  '<g transform="translate(178 14) scale(.92)">'+ART_HERO_WIN.replace(/<\/?svg[^>]*>/g,'')+'</g>'+
+  '<g transform="translate(8 134) scale(.42)">'+ART_KABI.replace(/<\/?svg[^>]*>/g,'')+'</g>'+
+  '<g transform="translate(364 140) scale(.4)">'+ART_HONE.replace(/<\/?svg[^>]*>/g,'')+'</g>'
+);
+
+/* 雲 */
+function cloud(x,y,s){
+  return '<g class="cloud" style="left:'+x+'%;top:'+y+'%"><svg width="'+(90*s)+'" viewBox="0 0 90 40">'+
+  '<path d="M14 34 q-12 0 -12 -11 q0 -11 12 -11 q3 -10 16 -10 q12 0 16 9 q14 -2 18 8 q14 0 14 9 q0 6 -10 6 Z" fill="#fff" stroke="'+INK+'" stroke-width="3"/></svg></g>';
+}
+
+/* ---------- クイズデータ ---------- */
+const RB = (k,f)=>'<ruby>'+k+'<rt>'+f+'</rt></ruby>';
+const DOKU = RB('毒','どく');
+
+const CHAPTERS = [
+  { num:'第1章', title:DOKU+'のある食べもの', art:()=>ART_CH1,
+    desc:'ふだん食べているものの中にも、'+DOKU+'をもつなかまがかくれているよ。<br>'+DOKU+'モンスターのクイズにこたえて先へすすもう!' },
+  { num:'第2章', title:'いたむ・くさるのナゾ', art:()=>ART_CH2,
+    desc:'食べものは時間がたつと、どうしていたんでしまうのかな?<br>カビや'+RB('菌','きん')+'のモンスターがまちかまえているぞ!' },
+  { num:'第3章', title:'食べられないところ', art:()=>ART_CH3,
+    desc:'ほねや皮、たね…「食べられないところ」にもひみつがいっぱい。<br>さいごの王さまをたおして、食と'+DOKU+'はかせになろう!' },
+];
+
+const QUESTIONS = [
+  /* ---- 第1章 ---- */
+  { ch:0, enemy:'メジャガー', kind:'めが出たジャガイモ', art:()=>ART_POTATO,
+    q:'ジャガイモに、'+RB('緑色','みどりいろ')+'になったところや「め」が出ていたよ。どうやって食べる?',
+    choices:[
+      'めと緑のところを、まわりごと大きく取りのぞいてから食べる',
+      '小さいめだから、そのまま食べてもへいき',
+      'よくあらえば、緑のところも食べられる'],
+    ans:0,
+    exp:'ジャガイモのめや緑になった皮には「<b>ソラニン</b>」という'+DOKU+'があるよ。食べるとおなかがいたくなったり、はいたりすることも。あらってもにても'+DOKU+'はきえないので、<b>めと緑のところはまわりごとしっかり取りのぞく</b>のが正かい。学校のジャガイモほりでも事こが起きたことがあるんだ。' },
+
+  { ch:0, enemy:'スイセンガー', kind:'ニラにばけた花', art:()=>ART_SUISEN,
+    q:'にわでつんだ「ニラみたいな葉っぱ」。でも、ニラのつよいにおいが しないよ。どうする?',
+    choices:[
+      'においがしないなら、ぜったいに食べない',
+      'ゆでれば'+DOKU+'がきえるから食べてよい',
+      'ひと口だけあじみしてたしかめる'],
+    ans:0,
+    exp:'<b>スイセン</b>の葉はニラとそっくりだけど、'+DOKU+'があるよ。見分けるポイントは<b>におい</b>。ニラはギョウザのようなつよいにおいがするけど、スイセンはほとんどにおわない。たまねぎとまちがえやすい「'+RB('球根','きゅうこん')+'」にも'+DOKU+'があるから、<b>「ニラかな?」とまよったら食べない</b>がルールだよ。' },
+
+  { ch:0, enemy:'ドクキノコン', kind:DOKU+'キノコ', art:()=>ART_KINOKO,
+    q:DOKU+'キノコの見分けかたとして、正しいものはどれ?',
+    choices:[
+      'はでな色のキノコだけが'+DOKU+'で、じみな色なら食べられる',
+      '見た目だけでは見分けられない。知らないキノコは食べない',
+      'むしが食べているキノコなら、人も食べられる'],
+    ans:1,
+    exp:'じつは<b>じみな色の'+DOKU+'キノコ</b>もたくさんいるよ。たとえば「ツキヨタケ」は食べられるキノコとそっくり。「むしが食べていればだいじょうぶ」「たてにさければだいじょうぶ」というのも<b>ぜんぶまちがい</b>。キノコはかせでもまちがえることがあるから、<b>知らないキノコは とらない・食べない</b>!' },
+
+  { ch:0, enemy:'フグマル', kind:DOKU+'をもつ魚', art:()=>ART_FUGU,
+    q:'フグにはつよい'+DOKU+'があるのに、お店で食べられるのはなぜ?',
+    choices:[
+      'やいたりにたりすると、'+DOKU+'がきえるから',
+      'お店のフグには、もともと'+DOKU+'がないから',
+      'めんきょをもった人が、'+DOKU+'のあるところを取りのぞいているから'],
+    ans:2,
+    exp:'フグの'+DOKU+'「<b>テトロドトキシン</b>」は、<b>かねつしてもきえない</b>とてもつよい'+DOKU+'。だから、べんきょうして<b>めんきょ</b>を取った人だけが、'+DOKU+'のある部分を安全に取りのぞいてりょうりできるんだ。むかしの人たちが研究をかさねて、あぶない魚をおいしく食べるほうほうを見つけた——これも大切な<b>食文化</b>だね。' },
+
+  /* ---- 第2章 ---- */
+  { ch:1, enemy:'カビーノ', kind:'カビパン', art:()=>ART_KABI,
+    q:'パンに青いカビがはえていた! カビのところだけちぎれば、のこりは食べてもいい?',
+    choices:[
+      'カビの部分だけ取れば、のこりは食べられる',
+      'だめ! 見えないところまでカビが広がっているから食べない',
+      'トースターでよくやけば食べられる'],
+    ans:1,
+    exp:'カビは「<b>きんし</b>」という目に見えない糸を、食べものの中のおくふかくまでのばしているよ。だから<b>見えるところを取ってもダメ</b>。カビが作る'+DOKU+'(カビ'+DOKU+')には、<b>かねつしてもこわれないもの</b>もあるんだ。カビがはえたら、もったいないけど食べないでね。' },
+
+  { ch:1, enemy:'クサルン', kind:'いたんだおにぎり', art:()=>ART_KUSARU,
+    q:'れいぞうこに入れておいた食べものは、どうなる?',
+    choices:[
+      'れいぞうこの中なら、ぜったいにくさらない',
+      'いたむのがゆっくりになるだけで、いつかはいたむ',
+      'れいぞうこの中のほうが早くくさる'],
+    ans:1,
+    exp:'食べものをいたませるのは、目に見えない<b>び生物(きん)</b>。れいぞうこのひくい温度では、きんのうごきが<b>ゆっくりになるだけ</b>で、ゼロにはならないんだ。だから、れいぞうこの中でも<b>早めに食べる</b>のが大事。食べる前に、<b>におい・色・ねばり</b>をチェックするくせをつけよう。' },
+
+  { ch:1, enemy:'ナゾノキン', kind:'なぞの'+RB('菌','きん'), art:()=>ART_KIN,
+    q:'なっとうやヨーグルトは、においがつよいのに食べられるのはなぜ?',
+    choices:[
+      '人の体にやくだつ'+RB('菌','きん')+'が「はっこう」させた食べものだから',
+      'ほんとうは少しくさっているけど、がまんして食べている',
+      'においがつよい食べものは、ぜんぶ体にわるい'],
+    ans:0,
+    exp:'おなじ「きんのはたらき」でも、<b>人のやくに立つ</b>ものを「<b>はっこう</b>」、<b>体に害がある</b>ものを「<b>ふはい(くさる)</b>」とよぶよ。なっとう、ヨーグルト、チーズ、みそ、しょうゆ…みんな、はっこうの力でおいしく長もちするようにした、せかいにほこる<b>食文化</b>なんだ!' },
+
+  /* ---- 第3章 ---- */
+  { ch:2, enemy:'ホネゴン', kind:'魚のほね', art:()=>ART_HONE,
+    q:'やき魚を食べていたら、小さなほねがのどにささっちゃった! どうする?',
+    choices:[
+      'ごはんをかまずに丸のみして、おしこむ',
+      'そのままほうっておけば、しぜんにとける',
+      'すぐに大人につたえる。ごはんの丸のみはしない'],
+    ans:2,
+    exp:'「ごはんを丸のみ」は、ほねが<b>もっとふかくささる</b>ことがあるきけんなほうほう。まずは<b>大人につたえて</b>、とれないときはお医者さんへ。そうならないように、魚は<b>ほねに気をつけて、よくかんで</b>食べよう。ほねのとりかたが上手になると、魚はもっとおいしいよ!' },
+
+  { ch:2, enemy:'タネビー', kind:'青いウメの実', art:()=>ART_UME,
+    q:'木になっている青いウメの実。もいで、そのままかじってもいい?',
+    choices:[
+      'くだものだから、そのまま食べてよい',
+      '青い実やたねには'+DOKU+'のもとがあるので、そのまま食べない',
+      'たねの中身は、おやつになる'],
+    ans:1,
+    exp:'青いウメの実やたねには「<b>アミグダリン</b>」という、おなかの中で'+DOKU+'にかわるせいぶんがあるよ。でも、<b>うめぼしやウメシロップ</b>にかこうすると、おいしく食べられるようになるんだ。'+DOKU+'のあるものを、ちえとくふうで食べものにかえる——これも先人がのこしてくれた<b>食文化</b>だね。' },
+
+  { ch:2, enemy:'フショクブキング', kind:'食べられないところの王', art:()=>ART_KING, boss:true,
+    q:'【さいごの問題】「食べられない」と思われがちだけど、じつは おいしく食べられるのはどれ?',
+    choices:[
+      'だいこんの葉っぱ',
+      'ジャガイモのめ',
+      'フグのきも(かんぞう)'],
+    ans:0,
+    exp:'<b>だいこんの葉</b>は、えいようたっぷりで、いためものやふりかけにするとおいしい! いっぽう、ジャガイモのめとフグのきもは'+DOKU+'があるから×。「<b>食べられないもの</b>」と「<b>食べられるのに すてているもの</b>」を見分けられると、'+DOKU+'からも身をまもれて、「もったいない」もへらせる。きみはもう、りっぱな<b>食と'+DOKU+'はかせ</b>だ!' },
+];
+
+/* ---------- 効果音(WebAudio) ---------- */
+let soundOn = true, actx = null;
+function beep(freq, dur, type, vol, when){
+  if(!soundOn) return;
+  try{
+    actx = actx || new (window.AudioContext||window.webkitAudioContext)();
+    const o = actx.createOscillator(), g = actx.createGain();
+    o.type = type||'square'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol||.08, actx.currentTime+(when||0));
+    g.gain.exponentialRampToValueAtTime(.0001, actx.currentTime+(when||0)+dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(actx.currentTime+(when||0)); o.stop(actx.currentTime+(when||0)+dur+.05);
+  }catch(e){}
+}
+const SFX = {
+  start(){ beep(523,.12); beep(659,.12,'square',.08,.12); beep(784,.2,'square',.08,.24); },
+  ok(){ beep(660,.1,'triangle',.12); beep(880,.18,'triangle',.12,.1); },
+  ng(){ beep(220,.18,'sawtooth',.09); beep(165,.3,'sawtooth',.09,.15); },
+  hit(){ beep(440,.06,'square',.1); beep(330,.08,'square',.08,.05); },
+  fanfare(){ [523,659,784,1047].forEach((f,i)=>beep(f,.16,'triangle',.11,i*.13)); beep(1047,.5,'triangle',.1,.6); },
+  gameover(){ [392,330,262,196].forEach((f,i)=>beep(f,.22,'triangle',.1,i*.2)); },
+};
+
+/* ---------- ゲームの状態 ---------- */
+const MAX_HP = 100, DMG = 25;
+let state = {};
+function resetGame(){ state = { hp:MAX_HP, qIndex:0, correct:0, checkpointQ:0, checkpointHP:MAX_HP }; }
+const app = document.getElementById('app');
+
+function hpClass(hp){ return hp<=25 ? 'danger' : (hp<=50 ? 'low' : ''); }
+
+/* ---------- 画面: タイトル ---------- */
+function showTitle(){
+  resetGame();
+  app.innerHTML =
+  '<div class="title-screen">'+
+    '<div class="title-ribbon">「食と'+DOKU+'」けんきゅうクイズRPG</div>'+
+    '<h1 class="game-title">食どくクエスト</h1>'+
+    '<div class="game-sub">〜食と'+DOKU+'のだいぼうけん〜</div>'+
+    '<div class="title-art">'+ART_TITLE+'</div>'+
+    '<p class="title-msg">'+DOKU+'のある生きものや、いたんだ食べもの…。<br>'+
+    'わたしたちの「食」には、きけんが ひそんでいる!<br>'+
+    'クイズにこたえてモンスターをたおそう。<br>'+
+    '<b>まちがえると、ゆうしゃがダメージを うけるぞ!</b></p>'+
+    '<button class="btn" id="startBtn">ぼうけんに出発!</button>'+
+  '</div>';
+  document.getElementById('startBtn').onclick = ()=>{ SFX.start(); showChapter(0); };
+}
+
+/* ---------- 画面: 章とびら ---------- */
+function showChapter(chIdx){
+  const ch = CHAPTERS[chIdx];
+  /* チェックポイント保存 */
+  state.checkpointQ = state.qIndex; state.checkpointHP = state.hp;
+  app.innerHTML =
+  '<div class="chapter-screen">'+
+    '<div class="chapter-num">'+ch.num+'</div>'+
+    '<h2 class="chapter-title">'+ch.title+'</h2>'+
+    '<div class="chapter-art">'+ch.art()+'</div>'+
+    '<p class="chapter-desc">'+ch.desc+'</p>'+
+    '<button class="btn blue" id="goBtn">すすむ</button>'+
+  '</div>';
+  document.getElementById('goBtn').onclick = ()=>{ SFX.start(); showBattle(); };
+}
+
+/* ---------- 画面: バトル ---------- */
+function showBattle(){
+  const q = QUESTIONS[state.qIndex];
+  const ch = CHAPTERS[q.ch];
+  app.innerHTML =
+  '<div class="hud">'+
+    '<span class="chapter-tag">'+ch.num+' '+ch.title+'</span>'+
+    '<span class="q-count">もんだい '+(state.qIndex+1)+' / '+QUESTIONS.length+'</span>'+
+  '</div>'+
+  '<div class="stage" id="stage">'+
+    cloud(8,8,1)+cloud(58,4,1.2)+cloud(80,20,.8)+
+    '<div class="hp-box"><div class="hp-label"><span>ゆうしゃのHP</span><span id="hpNum">'+state.hp+'/'+MAX_HP+'</span></div>'+
+    '<div class="hp-bar"><div class="hp-fill '+hpClass(state.hp)+'" id="hpFill" style="width:'+(state.hp/MAX_HP*100)+'%"></div></div></div>'+
+    '<div class="enemy-name">'+(q.boss?'<small>★ボスとうじょう★</small>':'<small>'+q.kind+'</small>')+q.enemy+(q.boss?'<small>'+q.kind+'</small>':'')+'</div>'+
+    '<div class="hero-zone hero-bounce" id="heroZone">'+ART_HERO+'</div>'+
+    '<div class="enemy-zone enemy-in" id="enemyZone">'+q.art()+'</div>'+
+  '</div>'+
+  '<div class="speech">'+
+    '<span class="q-badge">'+q.enemy+'からの ちょうせんじょう!</span>'+
+    '<p class="q-text">'+q.q+'</p>'+
+    '<div class="choices" id="choices">'+
+      q.choices.map((c,i)=>'<button class="choice" data-i="'+i+'"><span class="mark">'+'ABC'[i]+'</span><span>'+c+'</span></button>').join('')+
+    '</div>'+
+  '</div>';
+  /* 登場後にふわふわアニメへ */
+  const ez = document.getElementById('enemyZone');
+  setTimeout(()=>{ ez.classList.remove('enemy-in'); ez.classList.add('enemy-float'); }, 550);
+
+  document.querySelectorAll('.choice').forEach(btn=>{
+    btn.onclick = ()=> answer(parseInt(btn.dataset.i,10), btn);
+  });
+}
+
+function answer(i, btn){
+  const q = QUESTIONS[state.qIndex];
+  document.querySelectorAll('.choice').forEach(b=>b.disabled=true);
+  const correct = (i === q.ans);
+  const stage = document.getElementById('stage');
+  const ez = document.getElementById('enemyZone');
+  const hz = document.getElementById('heroZone');
+
+  if(correct){
+    state.correct++;
+    btn.classList.add('picked-correct');
+    SFX.hit();
+    ez.classList.remove('enemy-float'); ez.classList.add('enemy-hit');
+    setTimeout(()=>{ SFX.ok(); showResult(true, q); }, 750);
+  }else{
+    btn.classList.add('picked-wrong');
+    state.hp = Math.max(0, state.hp - DMG);
+    SFX.ng();
+    stage.classList.add('flash-red');
+    hz.classList.remove('hero-bounce'); hz.classList.add('shake');
+    const fill = document.getElementById('hpFill');
+    fill.style.width = (state.hp/MAX_HP*100)+'%';
+    fill.className = 'hp-fill '+hpClass(state.hp);
+    document.getElementById('hpNum').textContent = state.hp+'/'+MAX_HP;
+    setTimeout(()=>{ showResult(false, q); }, 800);
+  }
+}
+
+/* ---------- 画面: 解説 ---------- */
+function showResult(correct, q){
+  const dead = (state.hp <= 0);
+  const ov = document.createElement('div');
+  ov.className = 'overlay';
+  ov.innerHTML =
+  '<div class="result-card">'+
+    (correct
+      ? '<div class="result-stamp ok">せいかい!</div><div style="font-size:14px">'+q.enemy+'を たおした!</div>'
+      : '<div class="result-stamp ng">ざんねん…</div><div class="result-dmg">ゆうしゃは '+DMG+' のダメージをうけた!</div>')+
+    '<div class="kaisetsu"><span class="k-title">かいせつ</span><br>'+q.exp+'</div>'+
+    '<button class="btn '+(correct?'green':'blue')+'" id="nextBtn">'+
+      (dead ? 'けっか を見る' : (state.qIndex===QUESTIONS.length-1 ? 'けっか を見る' : 'つぎへすすむ'))+
+    '</button>'+
+  '</div>';
+  document.body.appendChild(ov);
+  document.getElementById('nextBtn').onclick = ()=>{
+    ov.remove();
+    if(dead){ showGameOver(); return; }
+    state.qIndex++;
+    if(state.qIndex >= QUESTIONS.length){ showEnding(); return; }
+    const prevCh = QUESTIONS[state.qIndex-1].ch, nowCh = QUESTIONS[state.qIndex].ch;
+    if(nowCh !== prevCh){ showChapter(nowCh); } else { showBattle(); }
+  };
+}
+
+/* ---------- 画面: ゲームオーバー ---------- */
+function showGameOver(){
+  SFX.gameover();
+  app.innerHTML =
+  '<div class="end-screen">'+
+    '<h2 class="chapter-title" style="color:var(--purple)">ゲームオーバー…</h2>'+
+    '<div class="chapter-art" style="max-width:230px">'+ART_HERO_KO+'</div>'+
+    '<p class="chapter-desc">ゆうしゃは'+DOKU+'にやられてしまった…。<br>でもだいじょうぶ。<b>まちがえたぶんだけ、くわしくなれる!</b><br>この章のさいしょから、もういちど ちょうせんしよう。</p>'+
+    '<button class="btn" id="retryBtn">この章から もういちど</button><br><br>'+
+    '<button class="btn blue" id="titleBtn" style="font-size:15px;padding:9px 22px">タイトルにもどる</button>'+
+  '</div>';
+  document.getElementById('retryBtn').onclick = ()=>{
+    state.qIndex = state.checkpointQ; state.hp = MAX_HP;
+    state.checkpointHP = MAX_HP;
+    SFX.start(); showBattle();
+  };
+  document.getElementById('titleBtn').onclick = showTitle;
+}
+
+/* ---------- 画面: クリア ---------- */
+function showEnding(){
+  SFX.fanfare();
+  const c = state.correct, total = QUESTIONS.length;
+  let rank, msg;
+  if(c === total){ rank = 'でんせつの食どくマスター'; msg = 'ぜんもんせいかい! きみの知しきは、もうはかせレベルだ!'; }
+  else if(c >= 8){ rank = '食と'+DOKU+'はかせ'; msg = 'すばらしい! あぶない食べものを しっかり見ぬけたね!'; }
+  else if(c >= 5){ rank = '見ならい けんきゅういん'; msg = 'よくがんばった! まちがえた問題こそ、たからものだよ。'; }
+  else { rank = 'かけだし ぼうけんしゃ'; msg = 'ゴールできたのがすごい! かいせつをもういちど読んでみよう。'; }
+  app.innerHTML =
+  '<div class="end-screen">'+
+    '<h2 class="chapter-title" style="color:var(--green-deep)">クエスト クリア!</h2>'+
+    '<div class="chapter-art" style="max-width:240px">'+ART_HERO_WIN+'</div>'+
+    '<div class="rank-card">きみのしょうごう<br><span class="rank-name">'+rank+'</span>'+
+    '<div class="stat-row">せいかい '+c+' / '+total+' もん ・ のこりHP '+state.hp+'</div></div>'+
+    '<p class="chapter-desc">'+msg+'<br><br>'+
+    DOKU+'のことを知ると、ふだんの「食」が ちがって見えてくる。<br>'+
+    'あぶないものを ちえとくふうで おいしくかえてきた——<br>それが、わたしたちの<b>「食文化」</b>なんだ。</p>'+
+    '<button class="btn" id="againBtn">もういちど あそぶ</button>'+
+  '</div>';
+  document.getElementById('againBtn').onclick = ()=>{ SFX.start(); showTitle(); };
+}
+
+/* ---------- 音ボタン ---------- */
+document.getElementById('soundBtn').onclick = function(){
+  soundOn = !soundOn;
+  this.innerHTML = '音<br>'+(soundOn?'ON':'OFF');
+  if(soundOn) SFX.ok();
+};
+
+showTitle();
+
+</script>
+</body>
+</html>
